@@ -33,7 +33,7 @@ export class AdminService {
     const token = this.getAuthToken();
     if (token) {
       const decodedToken: any = jwtDecode(token);  // Decode the JWT Token
-      return decodedToken?.username || null;  // Return the userId field
+      return decodedToken?.userId || null;  // Return the userId field
     }
     return null;
   }
@@ -45,12 +45,10 @@ export class AdminService {
   }
 
   // Create a new channel
- // Create a new channel, including groupId
-createChannel(name: string, description: string, groupId: string): Observable<any> {
-  const headers = this.getAuthHeaders();
-  return this.http.post('http://localhost:3000/api/admin/create', 
-    { name, description, groupId }, { headers });
-}
+  createChannel(name: string, description: string): Observable<any> {
+    const headers = this.getAuthHeaders();
+    return this.http.post('http://localhost:3000/api/admin/create', { name, description }, { headers });
+  }
 
   // Get all users
   getUsers(): Observable<any> {
@@ -61,7 +59,6 @@ createChannel(name: string, description: string, groupId: string): Observable<an
   // Update user role
   updateUserRole(userId: string, newRole: string): Observable<any> {
     const headers = this.getAuthHeaders();
-    console.log(userId, newRole)
     return this.http.post('http://localhost:3000/api/admin/update-role', { userId, newRole }, { headers });
   }
 
@@ -92,7 +89,6 @@ createChannel(name: string, description: string, groupId: string): Observable<an
   // Delete channel
   deleteChannel(channelId: string): Observable<any> {
     const headers = this.getAuthHeaders();
-    console.log(channelId)
     return this.http.post<any>('http://localhost:3000/api/admin/channels/delete', { channelId }, { headers });
   }
 }
