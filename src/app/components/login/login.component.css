@@ -1,0 +1,63 @@
+/* src/app/components/login/login.component.css */
+.login-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+h2 {
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.success-message {
+  color: green;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.loading-indicator {
+  text-align: center;
+  color: #007bff;
+  font-size: 16px;
+}
+.login-link a {
+  color: #007bff;
+  text-decoration: underline; 
+  cursor: pointer; 
+}
+
+.login-link a:hover {
+  color: #0056b3;  
+}
