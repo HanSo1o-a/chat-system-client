@@ -1,0 +1,87 @@
+<div class="chat-container">
+  <!-- Channel List -->
+  <div class="channel-list">
+    <div class="change-username">
+      <h3>Your Username</h3>
+      <h3>{{ currentUsername }}</h3>
+      <input [(ngModel)]="newUsername" class="form-control" placeholder="Enter new username" />
+      <button (click)="changeUserId()" class="btn btn-primary">Change Username</button>
+      <br />
+    </div>
+
+    <h2 class="section-title">Groups and Channels</h2>
+    <div class="group" *ngFor="let group of groups">
+      <div *ngIf="group.name" class="group-container">
+        <h3 class="group-name">Group: {{ group.name }}</h3>
+        
+        <div class="group-info">
+          <p><strong>Admins:</strong>
+            <span *ngFor="let admin of group.admins; let last = last">
+              {{ admin }}<span *ngIf="!last">, </span>
+            </span>
+          </p>
+        
+          <p><strong>Members:</strong>
+            <span *ngFor="let member of group.members; let last = last">
+              {{ member }}<span *ngIf="!last">, </span>
+            </span>
+          </p>
+        </div>
+        
+        <h4 class="channels-title">Group Channels</h4>
+        <div class="channel-list-items">
+          <div *ngFor="let channel of group.channels" class="channel" (click)="joinChannel(channel.id)">
+            {{ channel.name }}
+          </div>
+        </div>
+        <br />
+      </div>
+    </div>
+
+    <!-- Dropdown to select a group to exit -->
+    <div class="exit-group">
+      <h3>Select a Group to Exit</h3>
+      <select [(ngModel)]="selectedGroupToExit" class="form-control">
+        <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+      </select>
+      <button (click)="exitGroup(selectedGroupToExit)" class="btn btn-danger mt-2">Exit Group</button>
+    </div>
+  </div>
+
+  <!-- Chat Box -->
+  <div class="chat-box">
+    <div class="messages">
+      <div *ngFor="let message of messages" class="message">
+        <strong>{{ message.username }}:</strong> {{ parseContent(message.content).content }}
+        <div *ngIf="parseContent(message.content).imageUrl">
+          <img [src]="parseContent(message.content).imageUrl" alt="Uploaded image" class="message-image" />
+        </div>
+        <div *ngIf="parseContent(message.content).videoUrl">
+          <video [src]="parseContent(message.content).videoUrl" controls class="message-video"></video>
+        </div>
+      </div>
+    </div>
+
+    <div class="message-input" *ngIf="isInChannel">
+      <input [(ngModel)]="message" class="input-message" placeholder="Type a message" />
+      <button (click)="sendMessage({ content: message })" class="send-button btn btn-primary">Send</button>
+    </div>
+  </div>
+
+  <!-- Video Chat Display -->
+  <div class="video-chat" *ngIf="isInVideoChat">
+    <div class="video-container">
+      <div class="video-label local">Local Stream</div>
+      <video id="localVideo" autoplay muted style="width: 100%; height: auto;"></video>
+    </div>
+    <div class="remote-video-container">
+      <div class="video-label remote">Remote Stream</div>
+    </div>
+  </div>
+
+  <!-- Show Admin Button for admins and superadmins -->
+  <div class="admin-buttons">
+    <button *ngIf="isAdminOrSuperAdmin()" (click)="navigateToAdminPage()" class="btn btn-warning go-to-admin-btn">Go to Admin Page</button>
+    <button (click)="logout()" class="btn btn-warning logout-btn">Logout</button>
+  </div>
+</div>

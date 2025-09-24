@@ -1,0 +1,183 @@
+<div class="container">
+  <button (click)="navigateToChat()" class="btn btn-secondary back-to-chat-btn">
+    <i class="fas fa-arrow-left"></i> <span>Back to Chat</span> <!-- Back to Chat Icon -->
+  </button>
+
+  <h3>Group Management</h3>
+
+  <!-- Superadmin creates groups -->
+  <div class="form-group">
+    <label for="groupName">Group Name</label>
+    <input type="text" id="groupName" [(ngModel)]="groupName" class="form-control" placeholder="Enter group name">
+  </div>
+
+  <div class="form-group">
+    <label for="groupDescription">Group Description</label>
+    <input type="text" id="groupDescription" [(ngModel)]="groupDescription" class="form-control" placeholder="Enter group description">
+  </div>
+
+  <button  (click)="createGroup()" class="btn btn-primary">
+    <i class="fas fa-plus-circle"></i> <span>Create Group</span> <!-- Create Group Icon -->
+  </button>
+
+  <div class="form-group">
+    <label for="groupSearch">Search Groups</label>
+    <input type="text" id="groupSearch" [(ngModel)]="searchQuery" class="form-control" placeholder="Search for a group">
+  </div>
+
+  <h4 *ngIf="filteredGroups().length > 0">All Groups</h4>
+
+  <div *ngFor="let group of filteredGroups()">
+    <button (click)="group.isExpanded = !group.isExpanded" class="btn btn-info">
+      <i class="fas" [ngClass]="group.isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i> <span>{{ group.isExpanded ? 'Hide' : 'Show' }} Details</span> <!-- Expand/Collapse Icon -->
+    </button>
+    <div *ngIf="group.isExpanded">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+            <th>Members</th>
+            <th>Admins</th>
+            <th>Channels</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ group.name }}</td>
+            <td>{{ group.description }}</td>
+            <td>
+              <div>
+                <div class="form-group">
+                  <label for="addAdmin">Add Admin</label>
+                  <select [(ngModel)]="selectedUserIdForAdminForGroup[group.id]" class="form-control">
+                    <option *ngFor="let user of filterAvailableGroupUsers(group, 'admin')" [value]="user.username" [disabled]="group.admins.includes(user.username)">
+                      {{ user.username }}
+                    </option>
+                  </select>
+                  <button (click)="addAdmin(group.id, selectedUserIdForAdminForGroup[group.id])" class="btn btn-warning">
+                    <i class="fas fa-user-plus"></i> <span>Add Admin</span> <!-- Add Admin Icon -->
+                  </button>
+                </div>
+
+                <div class="form-group">
+                  <label for="addMember">Add Member</label>
+                  <select [(ngModel)]="selectedUserIdForMemberForGroup[group.id]" class="form-control">
+                    <option *ngFor="let user of filterAvailableGroupUsers(group, 'member')" [value]="user.username" [disabled]="group.members.includes(user.username) || group.admins.includes(user.username)">
+                      {{ user.username }}
+                    </option>
+                  </select>
+                  <button (click)="addMember(group.id, selectedUserIdForMemberForGroup[group.id])" class="btn btn-info">
+                    <i class="fas fa-users"></i> <span>Add Member</span> <!-- Add Member Icon -->
+                  </button>
+                </div>
+
+                <div class="form-group">
+                  <label for="removeAdmin">Remove Admin</label>
+                  <select [(ngModel)]="selectedAdminToRemoveForGroup[group.id]" class="form-control">
+                    <option *ngFor="let admin of filterUsersInChannel(group, 'admin')" [value]="admin">{{ admin }}</option>
+                  </select>
+                  <button (click)="removeAdmin(group.id, selectedAdminToRemoveForGroup[group.id])" class="btn btn-danger">
+                    <i class="fas fa-user-times"></i> <span>Remove Admin</span> <!-- Remove Admin Icon -->
+                  </button>
+                </div>
+
+                <div class="form-group">
+                  <label for="removeMember">Remove Member</label>
+                  <select [(ngModel)]="selectedMemberToRemoveForGroup[group.id]" class="form-control">
+                    <option *ngFor="let member of filterUsersInChannel(group, 'member')" [value]="member">{{ member }}</option>
+                  </select>
+                  <button (click)="removeMember(group.id, selectedMemberToRemoveForGroup[group.id])" class="btn btn-danger">
+                    <i class="fas fa-user-minus"></i> <span>Remove Member</span> <!-- Remove Member Icon -->
+                  </button>
+                </div>
+
+                <button (click)="deleteGroup(group.id)" class="btn btn-danger">
+                  <i class="fas fa-trash-alt"></i> <span>Delete Group</span> <!-- Delete Group Icon -->
+                </button>
+              </div>
+            </td>
+            <td>
+              <ul>
+                <li *ngFor="let member of group.members">{{ member }}</li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li *ngFor="let admin of group.admins">{{ admin }}</li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li *ngFor="let channel of group.channels">
+                  {{ channel.name }}
+                  <button (click)="deleteChannelFromGroup(group.id, channel.id)" class="btn btn-danger btn-sm ml-2">
+                    <i class="fas fa-trash"></i> <span>Delete Channel</span> <!-- Delete Channel Icon -->
+                  </button>
+                </li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>Channel Management</h3>
+  
+  <div class="form-group">
+    <label for="channelName">Channel Name</label>
+    <input [(ngModel)]="channelName" class="form-control" placeholder="Enter channel name">
+  </div>
+
+  <div class="form-group">
+    <label for="channelDescription">Channel Description</label>
+    <input [(ngModel)]="channelDescription" class="form-control" placeholder="Enter channel description">
+  </div>
+
+  <div class="form-group">
+    <label for="groupSelect">Select Group</label>
+    <select [(ngModel)]="selectedGroupId" class="form-control">
+      <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
+    </select>
+  </div>
+
+  <button (click)="createChannel()" class="btn btn-primary">
+    <i class="fas fa-plus"></i> <span>Create Channel</span> <!-- Create Channel Icon -->
+  </button>
+
+  <h3 *ngIf="userRole === 'superadmin'">User Management</h3>
+  <table class="table" *ngIf="userRole === 'superadmin'">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Role</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let user of users">
+        <td>{{ user.username }}</td>
+        <td>{{ user.roles.join(', ') }}</td>
+        <td>
+          <div *ngIf="user.username === currentUserId">
+            <p>Roles: {{ user.roles.join(', ') }}</p>
+          </div>
+
+          <div *ngIf="user.username !== currentUserId">
+            <button (click)="changeUserRole(user.username, 'superadmin')" *ngIf="!user.roles.includes('superadmin')" class="btn btn-warning">
+              <i class="fas fa-arrow-up"></i> <span>Promote to Superadmin</span>
+            </button>
+            <button (click)="changeUserRole(user.username, 'admin')" *ngIf="!user.roles.includes('admin')&&!user.roles.includes('superadmin')" class="btn btn-warning">
+              <i class="fas fa-arrow-up"></i> <span>Promote to Admin</span>
+            </button>
+            <button (click)="changeUserRole(user.username, 'user')" *ngIf="user.roles.includes('superadmin')" class="btn btn-warning">
+              <i class="fas fa-arrow-down"></i> <span>Demote to User</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
