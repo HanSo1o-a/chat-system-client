@@ -1,87 +1,127 @@
 <div class="chat-container">
+  <!-- Group List -->
+  <div class="group-list">
+    <h2>Groups</h2>
+    <div
+      class="group"
+      *ngFor="let group of groups"
+      (click)="selectGroup(group)"
+      [class.active]="currentGroup && currentGroup._id === group._id"
+    >
+      {{ group.name }}
+    </div>
+  </div>
+
   <!-- Channel List -->
-  <div class="channel-list">
-    <div class="change-username">
-      <h3>Your Username</h3>
-      <h3>{{ currentUsername }}</h3>
-      <input [(ngModel)]="newUsername" class="form-control" placeholder="Enter new username" />
-      <button (click)="changeUserId()" class="btn btn-primary">Change Username</button>
-      <br />
+  <div class="channel-list" *ngIf="currentGroup">
+    <h3>Channels in {{ currentGroup.name }}</h3>
+    <div
+      class="channel"
+      *ngFor="let channel of channels"
+      (click)="joinChannel(channel)"
+      [class.active]="currentChannel && currentChannel._id === channel._id"
+    >
+      {{ channel.name }}
     </div>
 
-    <h2 class="section-title">Groups and Channels</h2>
-    <div class="group" *ngFor="let group of groups">
-      <div *ngIf="group.name" class="group-container">
-        <h3 class="group-name">Group: {{ group.name }}</h3>
-        
-        <div class="group-info">
-          <p><strong>Admins:</strong>
-            <span *ngFor="let admin of group.admins; let last = last">
-              {{ admin }}<span *ngIf="!last">, </span>
-            </span>
-          </p>
-        
-          <p><strong>Members:</strong>
-            <span *ngFor="let member of group.members; let last = last">
-              {{ member }}<span *ngIf="!last">, </span>
-            </span>
-          </p>
-        </div>
-        
-        <h4 class="channels-title">Group Channels</h4>
-        <div class="channel-list-items">
-          <div *ngFor="let channel of group.channels" class="channel" (click)="joinChannel(channel.id)">
-            {{ channel.name }}
-          </div>
-        </div>
-        <br />
-      </div>
-    </div>
-
-    <!-- Dropdown to select a group to exit -->
-    <div class="exit-group">
-      <h3>Select a Group to Exit</h3>
-      <select [(ngModel)]="selectedGroupToExit" class="form-control">
-        <option *ngFor="let group of groups" [value]="group.id">{{ group.name }}</option>
-      </select>
-      <button (click)="exitGroup(selectedGroupToExit)" class="btn btn-danger mt-2">Exit Group</button>
+    <div class="leave-actions">
+      <!-- Normal user leaves group -->
+      <button *ngIf="userRole === 'user'" 
+              (click)="leaveGroup(currentGroup._id)" 
+              class="leave-group-btn">
+        Leave Group
+      </button>
+    
+      <!-- Admin leaves group -->
+      <button *ngIf="userRole === 'admin'" 
+              (click)="leaveGroupAdmin(currentGroup._id)" 
+              class="leave-admin-btn">
+        Leave Group (Admin)
+      </button>
     </div>
   </div>
 
   <!-- Chat Box -->
-  <div class="chat-box">
+  <div class="chat-box" *ngIf="currentChannel">
     <div class="messages">
       <div *ngFor="let message of messages" class="message">
-        <strong>{{ message.username }}:</strong> {{ parseContent(message.content).content }}
+        <strong>{{ message.username }}:</strong>
+        {{ parseContent(message.content).content }}
+
+        <!-- Image message -->
         <div *ngIf="parseContent(message.content).imageUrl">
-          <img [src]="parseContent(message.content).imageUrl" alt="Uploaded image" class="message-image" />
+          <img
+            [src]="parseContent(message.content).imageUrl"
+            alt="Uploaded image"
+            class="message-image"
+          />
         </div>
+
+        <!-- Video message -->
         <div *ngIf="parseContent(message.content).videoUrl">
-          <video [src]="parseContent(message.content).videoUrl" controls class="message-video"></video>
+          <video
+            [src]="parseContent(message.content).videoUrl"
+            controls
+            class="message-video"
+          ></video>
         </div>
       </div>
     </div>
 
+    <!-- Input Box -->
     <div class="message-input" *ngIf="isInChannel">
-      <input [(ngModel)]="message" class="input-message" placeholder="Type a message" />
-      <button (click)="sendMessage({ content: message })" class="send-button btn btn-primary">Send</button>
+      <input [(ngModel)]="message" placeholder="Type a message" />
+      <button (click)="sendMessage()" class="send-button">Send</button>
+
+      <!-- Upload Image -->
+      <div class="upload-buttons">
+        <label for="imageInput" class="upload-button">
+          <i class="fa fa-image"></i>
+          <span>Upload Image</span>
+        </label>
+        <input
+          type="file"
+          id="imageInput"
+          accept="image/*"
+          (change)="onImageSelect($event)"
+          hidden
+        />
+      </div>
+
+      <!-- Video chat buttons -->
+      <button
+        *ngIf="!isInVideoChat"
+        (click)="startVideoChat()"
+        class="join-video-btn"
+      >
+        Join Video Chat
+      </button>
+      <button
+        *ngIf="isInVideoChat"
+        (click)="leaveVideoChat()"
+        class="leave-video-btn"
+      >
+        Leave Video Chat
+      </button>
     </div>
   </div>
 
-  <!-- Video Chat Display -->
+  <!-- Video Chat Window -->
   <div class="video-chat" *ngIf="isInVideoChat">
-    <div class="video-container">
-      <div class="video-label local">Local Stream</div>
-      <video id="localVideo" autoplay muted style="width: 100%; height: auto;"></video>
-    </div>
-    <div class="remote-video-container">
-      <div class="video-label remote">Remote Stream</div>
+    <!-- Remote video area -->
+    <div class="remote-video-container"></div>
+
+    <!-- Local small window -->
+    <div class="local-video-container">
+      <span class="video-label">You</span>
+      <video id="localVideo" autoplay muted></video>
     </div>
   </div>
 
-  <!-- Show Admin Button for admins and superadmins -->
-  <div class="admin-buttons">
-    <button *ngIf="isAdminOrSuperAdmin()" (click)="navigateToAdminPage()" class="btn btn-warning go-to-admin-btn">Go to Admin Page</button>
-    <button (click)="logout()" class="btn btn-warning logout-btn">Logout</button>
+  <!-- Admin Button -->
+  <div *ngIf="isAdminOrSuperAdmin()">
+    <button (click)="navigateToAdminPage()" class="go-to-admin-btn">
+      Go to Admin Page
+    </button>
   </div>
 </div>

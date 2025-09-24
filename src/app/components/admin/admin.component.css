@@ -1,270 +1,190 @@
-/* src/app/components/admin/admin.component.css */
-
-/* Main container */
-.container {
-  width: 80%;
-  margin: 0 auto;  /* Center alignment */
+/* ===================== Global / Layout ===================== */
+/* Container for admin pages: sets readable width and base text styles */
+.admin-container {
+  width: 95%;
+  max-width: 1200px;
+  margin: 20px auto;
+  font-family: 'Segoe UI', sans-serif;
+  color: #2c3e50;
 }
 
-/* Headings */
-h3, h4 {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
+/* Section titles: visual divider with accent underline */
+h2 {
+  font-size: 1.6rem;
   font-weight: 600;
-  color: #333;
-  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 3px solid #007bff;
+  padding-bottom: 8px;
 }
 
-/* Channel management section */
-.form-group {
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+/* ===================== Card ===================== */
+/* Generic card wrapper for panels/forms */
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card:hover {
+  box-shadow: 0 5px 12px rgba(0,0,0,0.12);
 }
 
-.form-group label {
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #555;
-}
-
+/* ===================== Forms ===================== */
+/* Standard text inputs / selects */
 .form-control {
   width: 100%;
-  padding: 8px 12px;
-  font-size: 0.95rem;
-  border-radius: 5px;
+  padding: 10px 12px;
   border: 1px solid #ddd;
-  background-color: #f9f9f9;
-  box-sizing: border-box;
-}
-
-/* Button styles */
-button.btn {
-  font-size: 1rem;
-  padding: 10px 20px;
   border-radius: 6px;
-  margin-top: 10px;
-  width: 100%;
-  cursor: pointer;
-  transition: all 0.3s;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0,123,255,0.3);
+  outline: none; /* rely on box-shadow focus ring */
 }
 
-button.btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-/* Button colors */
-button.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-button.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-button.btn-warning {
-  background-color: #ffc107;
-  color: white;
-}
-
-button.btn-warning:hover {
-  background-color: #e0a800;
-}
-
-button.btn-info {
-  background-color: #17a2b8;
-  color: white;
-}
-
-button.btn-info:hover {
-  background-color: #138496;
-}
-
-button.btn-danger {
-  background-color: #dc3545;
-  color: white;
-}
-
-button.btn-danger:hover {
-  background-color: #c82333;
-}
-
-/* Table styles */
-table.table {
-  width: 100%;
-  margin-top: 30px;
-  border-collapse: collapse;
-  background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-table.table th, table.table td {
-  padding: 10px 15px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-table.table th {
-  background-color: #f1f1f1;
-  color: #333;
-}
-
-table.table tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-table.table td button {
-  width: 100%;
-  padding: 8px;
+/* ===================== Buttons ===================== */
+/* Shared button base */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
   border-radius: 6px;
-  margin-top: 5px;
-}
-
-/* Error and success message prompts */
-.alert {
-  padding: 12px;
-  margin-bottom: 20px;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
-}
-
-.alert-success {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-  color: #155724;
-}
-
-/* Back to Chat Button */
-.back-to-chat-btn {
-  padding: 12px 20px;
-  background-color: #28a745;  /* Green color */
-  color: white;
+  margin-right: 6px;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-bottom: 30px;
-  width: 100%;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+  transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+  text-decoration: none;
 }
 
-.back-to-chat-btn:hover {
-  background-color: #218838; /* Darker green on hover */
+/* Primary actions */
+.btn-primary { background: #007bff; color: #fff; }
+.btn-primary:hover { background: #0056b3; }
+
+/* Destructive actions */
+.btn-danger { background: #dc3545; color: #fff; }
+.btn-danger:hover { background: #c82333; }
+
+/* Secondary/neutral */
+.btn-secondary { background: #6c757d; color: #fff; }
+.btn-secondary:hover { background: #545b62; }
+
+/* Alert/attention */
+.btn-warning { background: #ffc107; color: #fff; }
+
+/* Informational */
+.btn-info { background: #17a2b8; color: #fff; }
+
+/* Keyboard focus visibility for accessibility */
+.btn:focus-visible {
+  outline: 3px solid rgba(0,123,255,0.45);
+  outline-offset: 2px;
 }
 
-/* Add responsive design */
-@media (max-width: 768px) {
-  table.table {
-    font-size: 14px;
-  }
-
-  .form-group {
-    width: 100%;
-    margin-bottom: 15px;
-  }
-
-  button.btn {
-    width: 100%;
-  }
-
-  .back-to-chat-btn {
-    width: 100%;
-  }
-
-  /* Using flexbox to align form items horizontally */
-  .form-row {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping */
-    justify-content: space-between; /* Distribute space between form items */
-    gap: 10px; /* Control spacing between form items */
-  }
-
-  /* Each form item takes up 3 columns (equivalent to Bootstrap's 4 columns) */
-  .form-group {
-    flex: 1 1 22%; /* Use Flexbox to control form item width */
-    margin-bottom: 10px;
-  }
-
-  /* Ensure enough spacing between buttons and input fields */
-  button {
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  /* Make the button clickable area larger */
-  button.btn {
-    padding: 10px;
-    margin-top: 10px;
-  }
-
-  /* Control horizontal arrangement and ensure wrapping */
-  .d-flex {
-    display: flex;
-    flex-wrap: wrap;  /* Wrap when width exceeds */
-    gap: 10px;  /* Control spacing between items */
-    justify-content: start; /* Left align */
-  }
-
-  .flex-item {
-    flex: 1 1 80px; /* Minimum width of 180px for each form-group, allow responsive adaptation */
-    max-width: 80px; /* Limit maximum width to avoid too wide */
-    min-width: 50px; /* Ensure display on very small screens */
-  }
-
-  .form-group {
-    margin-bottom: 10px;
-    flex-shrink: 1;  /* Allow shrinking to fit into limited space */
-  }
-
-  /* Style for the collapsible sections */
-.table th, .table td {
-  text-align: center;
+/* Press feedback */
+.btn:active {
+  transform: translateY(1px);
 }
 
-.function-bar {
+/* ===================== Group Blocks ===================== */
+/* Group card: used to group channels or settings */
+.group-card {
+  border-left: 5px solid #007bff;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  background: #fff;
+}
+.group-header {
   display: flex;
-  justify-content: space-around;
-  background-color: #f1f1f1;
-  padding: 10px;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer; /* indicates collapsible/interactive area */
 }
-
-.btn-icon {
-  font-size: 1.5rem;
-  color: #333;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-icon:hover {
+.group-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
   color: #007bff;
 }
-
-/* Hide details initially */
-.group-details {
-  display: none;
+.group-header .desc {
+  font-size: 0.9rem;
+  color: #666;
 }
 
-button.btn-info {
-  background-color: #007bff;
-  color: white;
+/* ===================== Channel List ===================== */
+/* Unordered list container without bullets */
+.channel-list {
+  list-style: none;
+  margin-top: 10px;
+  padding-left: 0;
+}
+.channel-item {
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin: 8px 0;
+  padding: 10px 12px;
+}
+.channel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.channel-header strong {
+  color: #2c3e50;
+  font-size: 1rem;
+}
+.channel-actions {
+  display: flex;
+  gap: 6px;
 }
 
-button.btn-info:hover {
-  background-color: #0056b3;
+/* ===================== Tables ===================== */
+/* Generic table for user lists or datasets */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden; /* keep rounded corners */
+}
+.table th,
+.table td {
+  padding: 12px 15px;
+  text-align: left;
+}
+.table th {
+  background: #f4f6f8;
+  font-weight: 600;
+}
+.table tbody tr:hover {
+  background: #f9f9f9;
 }
 
-
+/* ===================== Responsive ===================== */
+/* Mobile adjustments for narrow screens */
+@media (max-width: 768px) {
+  .channel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .channel-actions {
+    margin-top: 6px;
+    width: 100%;
+  }
+  .btn {
+    width: 100%;
+    margin-top: 6px;
+  }
 }

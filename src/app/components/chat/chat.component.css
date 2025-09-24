@@ -1,274 +1,284 @@
-/* src/app/components/chat/chat.component.css */
-
+/* ===== General ===== */
 .chat-container {
   display: flex;
   flex-direction: row;
   height: 100vh;
-  font-family: Arial, sans-serif;
-}
-/* Channel List */
-.channel-list {
-  width: 300px;  /* 增加宽度，提供更大的空间 */
-  background-color: #f4f4f4;
-  padding: 20px;
-  border-right: 2px solid #ddd;  /* 给右侧添加分隔线 */
-  overflow-y: auto;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);  /* 为频道列表添加阴影 */
-}
-
-/* Section Title */
-.channel-list h2 {
-  text-align: center;
-  margin-bottom: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f6fa;
   color: #333;
-  font-size: 20px;
-  font-weight: bold;
 }
 
-/* Change Username Section */
-.change-username {
-  margin-bottom: 20px;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.change-username h3 {
-  margin: 10px 0;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.change-username input {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-
-.change-username button {
-  width: 100%;
-  padding: 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.change-username button:hover {
-  background-color: #0056b3;
-}
-
-/* Group Container */
-.group-container {
-  background-color: #fff;
+/* ===== Group List ===== */
+.group-list {
+  width: 220px;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
   padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.group-name {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.group-info {
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-
-.group-info p {
-  margin-bottom: 5px;
-}
-
-.group-info span {
-  font-weight: normal;
-  color: #555;
-}
-/* Title for Group Channels */
-.channels-title {
-  font-size: 20px; /* Larger font size */
-  font-weight: bold; /* Bold text */
-  color: #333; /* Dark color for readability */
-  margin-bottom: 15px;
-  text-transform: uppercase; /* Make it all caps for emphasis */
-  letter-spacing: 1px; /* Add some space between letters */
-  border-bottom: 2px solid #333; /* Blue underline for emphasis */
-  padding-bottom: 10px; /* Add some space below the title */
-}
-
-/* Channel list items styling */
-.channel-list-items {
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.group-list h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 18px;
+  color: #007bff;
+  font-weight: 600;
+}
+
+.group {
+  padding: 10px;
+  background-color: #f8f9fa;
+  margin: 6px 0;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.group:hover {
+  background-color: #e2e6ea;
+}
+
+.group.active {
+  background-color: #007bff;
+  color: white;
+  font-weight: 500;
+}
+
+/* ===== Channel List ===== */
+.channel-list {
+  width: 240px;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.channel-list h3 {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #28a745;
 }
 
 .channel {
-  padding: 12px;
-  background-color: #fff;
-  margin: 5px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  margin: 6px 0;
   cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s, transform 0.3s;
-  font-size: 16px;  /* Increase font size for better readability */
-  color: #333; /* Blue text to match the theme */
-  border: 1px solid #ddd;  /* Light border to separate channels */
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
-/* Hover effect for channels */
 .channel:hover {
-  background-color: #e7f4ff; /* Light blue background on hover */
-  transform: scale(1.05); /* Slight zoom effect to emphasize */
-  color: #0056b3; /* Darker blue on hover */
-  border-color: #0056b3; /* Darker border on hover */
+  background-color: #e2e6ea;
 }
 
-
-/* Select Group to Exit */
-.exit-group {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.channel.active {
+  background-color: #28a745;
+  color: white;
+  font-weight: 500;
 }
 
-.exit-group h3 {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 10px;
+/* ===== Leave Group Button ===== */
+.leave-actions {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+  text-align: center;
 }
 
-.exit-group select {
+.leave-group-btn,
+.leave-admin-btn {
   width: 100%;
   padding: 8px;
-  margin-bottom: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-/* Adjust input width inside the change-username section */
-.change-username input {
-  width: 100%; /* Ensure it fills the container */
-  max-width: 250px;  /* Limit the maximum width to 250px */
-  padding: 8px;
-  margin-bottom: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  display: block;  /* Make sure it's a block element */
-  margin-left: auto;
-  margin-right: auto;  /* Center the input horizontally */
-}
-
-.exit-group button {
-  width: 100%;
-  padding: 10px;
+  margin-top: 8px;
   background-color: #dc3545;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
+  font-size: 14px;
   cursor: pointer;
+  transition: background 0.3s;
 }
 
-.exit-group button:hover {
+.leave-group-btn:hover,
+.leave-admin-btn:hover {
   background-color: #c82333;
 }
+
+/* ===== Chat Box ===== */
 .chat-box {
   flex-grow: 1;
-  padding: 10px;
-  background-color: #f9f9f9;
   display: flex;
   flex-direction: column;
+  background-color: #fdfdfd;
+  padding: 15px;
 }
 
 .messages {
-  height: 70%;
+  flex-grow: 1;
   overflow-y: auto;
+  padding-right: 10px;
 }
 
 .message {
-  background-color: #fff;
-  margin: 5px 0;
-  padding: 10px;
-  border-radius: 5px;
+  background-color: #ffffff;
+  margin: 6px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
+.message strong {
+  color: #007bff;
+  font-weight: 600;
+}
+
+/* ===== Input Box ===== */
 .message-input {
   display: flex;
-  margin-top: 10px;
+  align-items: center;
+  margin-top: 12px;
+  gap: 8px;
 }
 
 .message-input input {
-  width: 85%;
-  padding: 8px;
-  margin-right: 10px;
-  border-radius: 5px;
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
   border: 1px solid #ccc;
+  transition: border 0.2s;
 }
 
-.message-input button {
-  padding: 8px 16px;
-  background-color: #28a745;
+.message-input input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.send-button,
+.upload-button,
+.join-video-btn,
+.leave-video-btn {
+  background-color: #007bff;
   color: white;
+  padding: 8px 14px;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
 }
 
-.message-input button:hover {
-  background-color: #218838;
+.send-button:hover,
+.upload-button:hover,
+.join-video-btn:hover {
+  background-color: #0056b3;
 }
 
+.leave-video-btn {
+  background-color: #dc3545;
+}
+
+.leave-video-btn:hover {
+  background-color: #c82333;
+}
+
+.message-image {
+  max-width: 100%;
+  max-height: 250px;
+  margin-top: 6px;
+  border-radius: 6px;
+}
+
+.message-video {
+  max-width: 100%;
+  max-height: 220px;
+  margin-top: 6px;
+  border-radius: 6px;
+}
+
+/* Video chat container: full screen covering chat area */
+.video-chat {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.remote-video-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.remote-video {
+  width: 300px;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 2px solid #444;
+  background: black;
+}
+
+.video-label {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Local video window: floating at bottom right */
+.local-video-container {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  width: 200px;
+  height: 120px;
+  border: 2px solid #28a745;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  z-index: 10;
+}
+
+.local-video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== Admin Button (fixed at bottom left) ===== */
 .go-to-admin-btn {
-  position: fixed;
+  position: absolute;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 20px;
+  left: 15px;
+
+  padding: 10px;
   background-color: #ffc107;
   color: white;
   border: none;
-  border-radius: 5px;
-  font-size: 16px;
+  border-radius: 6px;
+  font-size: 15px;
   cursor: pointer;
-  transition: background-color 0.3s;
-  z-index: 1000;
+  transition: background 0.3s;
 }
 
 .go-to-admin-btn:hover {
   background-color: #e0a800;
-}
-
-.logout-btn {
-  position: fixed;
-  bottom: 20px;
-  left: 60%;
-  transform: translateX(-50%);
-  padding: 10px 20px;
-  background-color: #ffc107;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  z-index: 1000;
-}
-
-.logout-btn:hover {
-  opacity: 0.8;
-}
-
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .video-container, .remote-video-container video {
-    width: 100%;
-    margin-bottom: 10px;
-  }
 }

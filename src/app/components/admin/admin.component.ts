@@ -1,9 +1,9 @@
-// src/app/components/admin/admin.component.ts
 import { Component, OnInit } from '@angular/core';
-import { AdminService } from '../services/admin.service';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common'; 
+import { CommonModule } from '@angular/common';
+
+import { AdminService } from '../services/admin.service';
 import { GroupService } from '../services/group.service';
 
 @Component({
@@ -12,373 +12,266 @@ import { GroupService } from '../services/group.service';
   styleUrls: ['./admin.component.css'],
   imports: [FormsModule, CommonModule],
 })
-export class AdminComponent {
-  channels: any[] = [];
+export class AdminComponent implements OnInit {
   users: any[] = [];
-  groups: any[] = []; // Stores information of all groups
+  groups: any[] = [];
+
+  // Group fields
   groupName: string = '';
   groupDescription: string = '';
-  adminIds: string[] = [];  // Stores an array of admin IDs
+  adminIds: string[] = [];
 
-  selectedUserIdForAdmin: { [channelId: string]: string } = {}; // Dynamic selection for admin
-  selectedUserIdForMember: { [channelId: string]: string } = {}; // Dynamic selection for members
-  selectedMemberToRemove: { [channelId: string]: string } = {};  // For removing member
-  selectedAdminToRemove: { [channelId: string]: string } = {};    // For removing admin
-  searchQuery: string = '';  // Search query for filtering groups
-  selectedUserIdForAdminForGroup: { [groupId: string]: string } = {};  // Dynamic selection for admin in groups
-  selectedUserIdForMemberForGroup: { [groupId: string]: string } = {};  // Dynamic selection for members in groups
-  selectedMemberToRemoveForGroup: { [groupId: string]: string } = {};  // For removing member from group
-  selectedAdminToRemoveForGroup: { [groupId: string]: string } = {};    // For removing admin from group
+  // Channel fields (attached to group)
+  channelName: { [groupId: string]: string } = {};
+  channelDescription: { [groupId: string]: string } = {};
 
-  selectedGroupId : string = '';
-  channelName: string = '';
-  channelDescription: string = '';
+  // User selections
+  selectedUserIdForAdminForGroup: { [groupId: string]: string } = {};
+  selectedUserIdForMemberForGroup: { [groupId: string]: string } = {};
+  selectedMemberToRemoveForGroup: { [groupId: string]: string } = {};
+  selectedAdminToRemoveForGroup: { [groupId: string]: string } = {};
+
+  // Current user
+  currentUserId: string = '';
+  userRole: string = '';
+
+  // Message alerts
   errorMessage: string = '';
   successMessage: string = '';
-  currentUserId = '';
-  userRole: string = '';
-  constructor(private adminService: AdminService, private router: Router, private groupService: GroupService) {}
+
+  constructor(
+    private adminService: AdminService,
+    private groupService: GroupService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
-    
-    this.getChannels();
-    this.getUsers();  // Get all users
-    this.userRole = this.adminService.getUserRole() || 'user'; 
-    this.currentUserId = this.adminService.getCurrentUserId() || '';    // Get current user's ID
-    this.GetloadGroups();
+    this.userRole = this.adminService.getUserRole() || 'user';
+    this.currentUserId = this.adminService.getCurrentUserId() || '';
 
-  }
+    this.getUsers();
 
-// Get all groups
-  GetloadGroups() {
     if (this.userRole === 'superadmin') {
-      // Superadmins can view all groups
       this.loadGroups();
     } else if (this.userRole === 'admin') {
-      // Regular admins can only view the groups they manage
       this.loadAdminGroups();
     }
-    console.log(this.groups)
-  }
-  filteredGroups() {
-    return this.groups.filter(group =>
-      group.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-    );
-  }
-  // Get all channels
-  getChannels() {
-    this.adminService.getChannels().subscribe(
-      (response) => {
-        this.channels = response;
-        console.log('this.channels',this.channels)
-      },
-      (error) => {
-        this.errorMessage = 'Error fetching channels';
-        console.error(error);
-      }
-    );
   }
 
-  // Get all users
-  getUsers() {
-    this.adminService.getUsers().subscribe(
-      (response) => {
-        this.users = response;
-        console.log(this.users)
+  /** ================= Group related ================= **/
+
+  loadGroups() {
+    this.groupService.getAllGroups().subscribe({
+      next: (groups: any[]) => (this.groups = groups),
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Error loading groups';
       },
-      (error) => {
-        this.errorMessage = 'Error fetching users';
-        console.error(error);
-      }
-    );
+    });
   }
 
-  createChannel() {
-    if (this.channelName && this.channelDescription && this.selectedGroupId) {
-      const newChannel = {
-        name: this.channelName,
-        description: this.channelDescription,
-        groupId: this.selectedGroupId // Pass the selected group ID
-      };
-  
-      this.adminService.createChannel(this.channelName, this.channelDescription, this.selectedGroupId).subscribe(
-        (response) => {
-          this.successMessage = 'Channel created successfully!';
-          this.getChannels();  // Refresh channel list
-          this.GetloadGroups();
-        },
-        (error) => {
-          this.errorMessage = 'Error creating channel';
-          console.error(error);
+  loadAdminGroups() {
+    this.groupService.getAdminGroups(this.currentUserId).subscribe({
+      next: (groups: any[]) => (this.groups = groups),
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Error loading admin groups';
+      },
+    });
+  }
+
+  createGroup() {
+    if (!this.groupName.trim()) {
+      this.errorMessage = 'Group name cannot be empty';
+      return;
+    }
+
+    const newGroup = {
+      name: this.groupName,
+      description: this.groupDescription,
+      adminIds: this.adminIds,
+    };
+
+    this.groupService.createGroup(newGroup).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.successMessage = 'Group created successfully!';
+          this.loadGroups();
+          this.groupName = '';
+          this.groupDescription = '';
+          this.adminIds = [];
+        } else {
+          this.errorMessage = 'Group creation failed';
         }
-      );
-    } else {
-      this.errorMessage = 'Please fill in all fields including selecting a group';
-    }
-  }
-  
-
-  joinChannel(channelId: string) {
-    this.router.navigate([`/chat`]);  // Navigate to the chat page of this channel
+      },
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Error creating group';
+      },
+    });
   }
 
-  // Add admin to channel
-  addAdminToChannel(channelId: string, userId: string) {
-    if (!userId) {
-      this.errorMessage = 'Please select a user to add as admin';
+  deleteGroup(groupId: string) {
+    this.groupService.deleteGroup(groupId).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.successMessage = 'Group deleted';
+          this.groups = this.groups.filter((g) => g._id !== groupId);
+        } else {
+          this.errorMessage = 'Failed to delete group';
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Error deleting group';
+      },
+    });
+  }
+
+  canManageGroup(group: any): boolean {
+    return (
+      this.userRole === 'superadmin' ||
+      (group.admins && group.admins.some((a: any) => a._id === this.currentUserId))
+    );
+  }
+
+  /** ================= Channel related (attached to group) ================= **/
+
+  createChannel(groupId: string) {
+    const name = this.channelName[groupId];
+    const desc = this.channelDescription[groupId];
+
+    if (!name || !desc) {
+      this.errorMessage = 'Channel name/description required';
       return;
     }
-   
-    this.adminService.addChannelAdmin(channelId, userId).subscribe(
-      (response) => {
-        this.successMessage = 'User added as channel admin';
-         this.getChannels();
+
+    this.groupService.createChannel(groupId, { name, description: desc }).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.successMessage = 'Channel created!';
+          this.loadGroups();
+          this.channelName[groupId] = '';
+          this.channelDescription[groupId] = '';
+        } else {
+          this.errorMessage = 'Channel creation failed';
+        }
       },
-      (error) => {
-        this.errorMessage = 'Error adding admin to channel';
-        console.error(error);
-      }
-    );
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Error creating channel';
+      },
+    });
   }
 
-  // Add member to channel
-  addMemberToChannel(channelId: string, userId: string) {
-    if (!userId) {
-      this.errorMessage = 'Please select a user to add as member';
-      return;
-    }
-   
-    this.adminService.addChannelMember(channelId, userId).subscribe(
-      (response) => {
-        this.successMessage = 'User added to channel';
-        this.getChannels();
+  deleteChannel(groupId: string, channelId: string) {
+    this.groupService.deleteChannel(groupId, channelId).subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.successMessage = 'Channel deleted';
+          this.loadGroups();
+        } else {
+          this.errorMessage = 'Failed to delete channel';
+        }
       },
-      (error) => {
-        this.errorMessage = 'Error adding member to channel';
-        console.error(error);
-      }
-    );
-  }
-
-  navigateToChat() {
-    this.router.navigate(['/chat']);  // Assuming your chat page is at '/chat'
-  }
-
-  // Update user role
-  changeUserRole(userId: string, newRole: string) {
-    this.adminService.updateUserRole(userId, newRole).subscribe(
-      (response) => {
-        this.successMessage = `User role updated to ${newRole} successfully!`;
-        this.getUsers();  // Refresh user list
-      },
-      (error) => {
-        this.errorMessage = 'Error updating user role';
-        console.error(error);
-      }
-    );
-  }
-
-  // Remove member from channel
-  removeMemberFromChannel(channelId: string, userId: string) {
-    console.log(this.selectedMemberToRemove, userId);
-    this.adminService.removeChannelMember(channelId, userId).subscribe(
-      (response) => {
-        this.successMessage = 'User removed from channel';
-        this.getChannels(); 
-      },
-      (error) => {
-        this.errorMessage = 'Error removing member from channel';
-        console.error(error);
-      }
-    );
-  }
-
-  // Remove admin from channel
-  removeAdminFromChannel(channelId: string, userId: string) {
-    this.adminService.removeChannelAdmin(channelId, userId).subscribe(
-      (response) => {
-        this.successMessage = 'User removed as channel admin';
-        this.getChannels(); // Refresh the channel list
-      },
-      (error) => {
-        this.errorMessage = 'Error removing admin from channel';
-        console.error(error);
-      }
-    );
-  }
-    
-  deleteChannel(channelId: string) {
-    this.adminService.deleteChannel(channelId).subscribe(
-      (response) => {
-        this.successMessage = 'Channel deleted successfully!';
-        this.getChannels();  // Refresh channel list
-      },
-      (error) => {
+      error: (err) => {
+        console.error(err);
         this.errorMessage = 'Error deleting channel';
-        console.error(error);
+      },
+    });
+  }
+
+  /** ================= User Management ================= **/
+
+  getUsers() {
+    this.adminService.getUsers().subscribe({
+      next: (response) => (this.users = response),
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Error fetching users';
+      },
+    });
+  }
+
+  changeUserRole(userId: string, newRole: string) {
+    this.adminService.updateUserRole(userId, newRole).subscribe({
+      next: () => {
+        this.successMessage = `User role updated to ${newRole}`;
+        this.getUsers();
+      },
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Error updating user role';
+      },
+    });
+  }
+
+  /** ================= Group member/admin management ================= **/
+
+  addMember(groupId: string, userId: string) {
+    this.groupService.addMemberToGroup(groupId, userId).subscribe((res) => {
+      if (res.success) {
+        this.successMessage = 'Member added';
+        this.loadGroups();
       }
-    );
+    });
   }
 
-  filterUsers(channel: any, type: 'admin' | 'member') {
-    // Get current user's ID (can be obtained from authentication service)
-    const currentUserId = this.adminService.getCurrentUserId();  // You can implement this method or get the current user ID from auth service
-    
-    // Filter out users who are already admins or members
-    const usersAlreadyInChannel = type === 'admin' ? channel.admins : channel.members;
-    
-    return this.users.filter((user: { _id: string }) => 
-      !usersAlreadyInChannel.some((u: { _id: string }) => u._id === user._id) && user._id !== currentUserId
-    );
+  addAdmin(groupId: string, userId: string) {
+    this.groupService.addAdminToGroup(groupId, userId).subscribe((res) => {
+      if (res.success) {
+        this.successMessage = 'Admin added';
+        this.loadGroups();
+      }
+    });
   }
 
-  // Filter available users for admin or member roles in a channel
-  filterAvailableUsers(channel: any, type: 'admin' | 'member') {
-    const currentUserId = this.adminService.getCurrentUserId();
-    const usersAlreadyInChannel = type === 'admin' ? channel.admins : channel.members;
+  removeMember(groupId: string, userId: string) {
+    this.groupService.removeMemberFromGroup(groupId, userId).subscribe((res) => {
+      if (res.success) {
+        this.successMessage = 'Member removed';
+        this.loadGroups();
+      }
+    });
+  }
 
-    return this.users.filter((user: { _id: string }) => 
-      !usersAlreadyInChannel.some((u: { _id: string }) => u._id === user._id) && user._id !== currentUserId
-    );
+  removeAdmin(groupId: string, userId: string) {
+    this.groupService.removeAdminFromGroup(groupId, userId).subscribe((res) => {
+      if (res.success) {
+        this.successMessage = 'Admin removed';
+        this.loadGroups();
+      }
+    });
   }
 
   filterAvailableGroupUsers(group: any, type: 'admin' | 'member') {
     const currentUserId = this.adminService.getCurrentUserId();
+    let usersAlreadyInGroup =
+      type === 'admin' ? group.admins : group.members;
 
-  
-    // 确保排除 null 或 undefined 的值
-    let usersAlreadyInGroup = type === 'admin' ? group.admins : group.members;
- 
-    // Exclude admins when adding members
     if (type === 'member') {
-      usersAlreadyInGroup = usersAlreadyInGroup.concat(group.admins); // Add admins to the list of already selected users
+      usersAlreadyInGroup = usersAlreadyInGroup.concat(group.admins);
     }
 
-  
-    return this.users.filter((user: any) => 
-      // Exclude users already in the group (admins and members), and current user
-      user && !usersAlreadyInGroup.some((u: { username: string }) => u.username === user.username) && user.username !== currentUserId
+    return this.users.filter(
+      (user: any) =>
+        !usersAlreadyInGroup.some((u: any) => u._id === user._id) &&
+        user._id !== currentUserId
     );
   }
+  filterRemovableAdmins(group: any) {
+    return group.admins.filter((a: any) => a._id !== this.currentUserId);
+  }
   
-// Get users already in the channel (excluding current user)
-filterUsersInChannel(channel: any, type: 'admin' | 'member') {
-  const currentUserId = this.adminService.getCurrentUserId();
-
-  const usersInChannel = type === 'admin' ? channel.admins : channel.members;
-
-  // Ensure that we don't include null or undefined users
-  return usersInChannel.filter((user: { _id: string }) => user && user._id !== currentUserId);
-}
-
-  loadGroups() {
-    this.groupService.getAllGroups().subscribe((groups: any[]) => {
-      this.groups = groups;
-      console.log("Groups loaded:", this.groups);
-    });
+  filterRemovableMembers(group: any) {
+    return group.members.filter((m: any) => m._id !== this.currentUserId);
   }
-
-  // Get groups managed by admin
-  loadAdminGroups() {
-    this.groupService.getAdminGroups(this.currentUserId).subscribe(groups => {
-      this.groups = groups;
-      console.log("Admin Groups Loaded:", this.groups);  // Verify that admin groups are loaded correctly
-    });
+  get filteredUsers() {
+    return this.users.filter(u => u._id !== this.currentUserId);
   }
+  
 
-  // Create group
-  createGroup() {
-    const newGroup = {
-      name: this.groupName,
-      description: this.groupDescription,
-      adminIds: this.adminIds,  // Admin IDs
-    };
-
-    this.groupService.createGroup(newGroup).subscribe(response => {
-      if (response.success) {
-        this.groups.push(response.group);
-        this.groupName = '';
-        this.groupDescription = '';
-        this.adminIds = [];
-      } else {
-        alert('Group creation failed');
-      }
-    });
+  navigateToChat() {
+    this.router.navigate(['/chat']);
   }
-
-  // Delete group (Superadmin only)
-  deleteGroup(groupId: string) {
-    this.groupService.deleteGroup(groupId).subscribe(response => {
-      if (response.success) {
-        this.groups = this.groups.filter(group => group.id !== groupId);
-      } else {
-        alert('Failed to delete group');
-      }
-    });
-  }
-
-  // Add member to group
-  addMember(groupId: string, userId: string) {
-    this.groupService.addMemberToGroup(groupId, userId).subscribe(response => {
-      if (response.success) {
-        alert('Member added');
-        this.loadGroups();
-      } else {
-        alert('Failed to add member');
-      }
-    });
-  }
-
-  // Add admin to group
-  addAdmin(groupId: string, userId: string) {
-    this.groupService.addAdminToGroup(groupId, userId).subscribe(response => {
-      if (response.success) {
-        alert('Admin added');
-        this.loadGroups();
-      } else {
-        alert('Failed to add admin');
-      }
-    });
-  }
-
-  // Remove member
-  removeMember(groupId: string, userId: string) {
-    this.groupService.removeMemberFromGroup(groupId, userId).subscribe(response => {
-      if (response.success) {
-        alert('Member removed');
-        this.loadGroups();
-      } else {
-        alert('Failed to remove member');
-      }
-    });
-  }
-
-  // Remove admin
-  removeAdmin(groupId: string, userId: string) {
-    this.groupService.removeAdminFromGroup(groupId, userId).subscribe(response => {
-      if (response.success) {
-        alert('Admin removed');
-        this.loadGroups();
-      } else {
-        alert('Failed to remove admin');
-      }
-    });
-  }
-// Delete channel from group
-deleteChannelFromGroup(groupId: string, channelId: string) {
-  this.groupService.deleteChannelFromGroup(groupId, channelId).subscribe(
-    (response) => {
-      if (response.success) {
-        // Find the group and remove the channel
-        this.GetloadGroups();
-      } else {
-        console.error('Failed to delete channel');
-      }
-    },
-    (error) => {
-      console.error('Error deleting channel:', error);
-    }
-  );
-}
-
 }
