@@ -12,7 +12,6 @@ import { CommonModule } from '@angular/common';
   templateUrl: './register.html',
   styleUrls: ['./register.css']
 })
-
 export class RegisterComponent {
   username: string = '';
   email: string = '';  // Add email field

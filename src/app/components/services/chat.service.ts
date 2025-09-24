@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { jwtDecode } from 'jwt-decode';
 
+interface UploadResponse {
+  success: boolean;
+  fileUrl: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -20,58 +25,106 @@ export class ChatService {
     });
   }
 
-  // Get Token
+  // Get token
   getAuthToken(): string | null {
     return localStorage.getItem('authToken');
   }
-  getUsername(): string | null {
-    return localStorage.getItem('username');
-  }
-  
-  // Get user role from token
+
+  // Decode user role from token
   getUserRole(): string | null {
     const token = this.getAuthToken();
     if (token) {
-      const decodedToken: any = jwtDecode(token);  // Decode JWT Token
-      return decodedToken?.role || null;  // Return the role field
+      const decodedToken: any = jwtDecode(token);  
+      return decodedToken?.role || null;  
     }
     return null;
   }
 
-  // Get current user ID from token
+  // Decode user ID from token
   getUserId(): string | null {
     const token = this.getAuthToken();
     if (token) {
-      const decodedToken: any = jwtDecode(token);  // Decode JWT Token
+      const decodedToken: any = jwtDecode(token);  
       return decodedToken?.userId || null;
     }
     return null;
   }
 
-  // Get all channels
+  // =============================
+  // 🔹 Channels (old logic, may be deprecated)
+  // =============================
   getChannels(): Observable<any> {
     const headers = this.getAuthHeaders();
-    return this.http.get('http://localhost:3000/api/channels', { headers });
-  }
+    const role = this.getUserRole(); 
+    const userId = this.getUserId();  
 
-  // Connect to the channel
-  connect(channelId: string): void {
-    const username = localStorage.getItem('username') || 'Anonymous';  // Get username, can be from localStorage or other sources
-
-    if (!this.socket) {
-      this.socket = io('http://localhost:3001', {
-        query: { username: username }  // Pass the username via query
+    if (!role || !userId) {
+      return this.http.get('http://localhost:3000/api/channels', {
+        headers: headers.append('Role', 'user').append('UserId', '')
       });
     }
 
-    // Join the specified channel
-    this.socket.emit('joinRoom', channelId);
+    return this.http.get('http://localhost:3000/api/channels', {
+      headers: headers.append('Role', role).append('UserId', userId)
+    });
   }
 
-  // Join the chat room
+  // =============================
+  // 🔹 Socket.IO
+  // =============================
+
+  connect(channelId: string): void {
+    const username = localStorage.getItem('username') || 'Anonymous';  
+
+    if (!this.socket) {
+      this.socket = io('http://localhost:3001', {
+        query: { username }  
+      });
+    }
+
+    this.socket.emit('joinRoom', channelId);
+
+  }
+  
+  getSocketId(): string | null {
+    return this.socket?.id || null;
+  }
+
   joinChannel(channelId: string): void {
     if (this.socket) {
-      this.socket.emit('joinRoom', channelId);  // Send request to join the room
+      this.socket.emit('joinRoom', channelId);
+    }
+  }
+
+  sendMessage(channelId: string, message: string): void {
+    const username = localStorage.getItem('username') || 'Anonymous';
+    const userId = this.getUserId();  
+
+    const payload = {
+      username,
+      content: message,
+      userId   
+    };
+
+    if (this.socket) {
+      this.socket.emit('sendMessage', channelId, payload);
+    }
+  }
+
+  receiveMessage(): Observable<any> {
+    return new Observable<any>((observer) => {
+      if (this.socket) {
+        this.socket.on('receiveMessage', (message) => {
+          observer.next(message);  
+        });
+      }
+    });
+  }
+
+  disconnect(): void {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
   }
 
@@ -81,58 +134,67 @@ export class ChatService {
     return this.http.post<any>('http://localhost:3000/api/channels/create', 
       { name, description }, { headers });
   }
-
-  // Send message to server
-  sendMessage(channelId: string, message: string): void {
-    const username = localStorage.getItem('username') || 'Anonymous'; // Get the user's name from localStorage
-    const payload = { username, content: message };  // Include username with the message content
   
-    if (this.socket) {
-      this.socket.emit('sendMessage', channelId, payload);  // Send both username and message content
-    }
-  }
 
-  // Receive message (including speaker's name)
-  receiveMessage(): Observable<any> {
-    return new Observable<any>((observer) => {
-      if (this.socket) {
-        this.socket.on('receiveMessage', (message) => {
-          observer.next(message);  // Return the message object, including username and content
-        });
-      }
-    });
-  }
+  // =============================
+  // 🔹 File Upload
+  // =============================
 
-  // Disconnect Socket connection
-  disconnect(): void {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-  }
-
-  // Upload image with username
-  uploadImage(image: File): Observable<any> {
+  uploadImage(image: File): Observable<UploadResponse> {
     const headers = this.getAuthHeaders();
     const username = localStorage.getItem('username') || 'Anonymous';
     const formData = new FormData();
     formData.append('image', image, image.name);
-    formData.append('username', username);  // Add username to the request
+    formData.append('username', username);  
 
-    return this.http.post<{ success: boolean, fileUrl: string }>('http://localhost:3000/api/channels/upload-image', formData, { headers });
+    return this.http.post<UploadResponse>('http://localhost:3000/api/channels/upload-image', formData, { headers });
   }
 
-  // Upload video with username
-  uploadVideo(video: File): Observable<any> {
+  uploadVideo(video: File): Observable<UploadResponse> {
     const headers = this.getAuthHeaders();
     const username = localStorage.getItem('username') || 'Anonymous';
     const formData = new FormData();
     formData.append('video', video, video.name);
-    formData.append('username', username);  // Add username to the request
+    formData.append('username', username);  
 
-    return this.http.post<{ success: boolean, fileUrl: string }>('http://localhost:3000/api/channels/upload-video', formData, { headers });
+    return this.http.post<UploadResponse>('http://localhost:3000/api/channels/upload-video', formData, { headers });
   }
 
-  
+  // =============================
+  // 🔹 Group → Channel → Message
+  // =============================
+
+  getGroups(): Observable<any> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<any>('http://localhost:3000/api/groups/all', { headers });
+  }
+
+  getGroupChannels(groupId: string): Observable<any> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<any>(`http://localhost:3000/api/groups/${groupId}/channels`, { headers });
+  }
+
+  getChannelMessages(channelId: string): Observable<any> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<any>(`http://localhost:3000/api/channels/${channelId}/messages`, { headers });
+  }
+
+  // User leaves group
+  leaveGroup(groupId: string): Observable<any> {
+    return this.http.post(
+      `http://localhost:3000/api/groups/${groupId}/leave`,
+      {},  
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  // Admin leaves group management rights
+  leaveGroupAdmin(groupId: string): Observable<any> {
+    return this.http.post(
+      `http://localhost:3000/api/groups/${groupId}/leaveAdmin`,
+      {},  
+      { headers: this.getAuthHeaders() }
+    );
+  }
 
 }

@@ -1,33 +1,43 @@
 import { Injectable } from '@angular/core';
 import Peer from 'peerjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { ChatComponent } from '../../components/chat/chat.component'; 
-import { VideoChatService } from '../services/video-chat.service';  // Import VideoChatService
+import { VideoChatService } from '../services/video-chat.service';
+import { ChatService } from '../services/chat.service';
+
+export interface RoomUser {
+  peerId: string;
+  username: string;
+  socketId?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PeerService {
   peer: any;
-  localStream: any;
-  remoteStream: any;
+  localStream: MediaStream | null = null;
   peerId: string | null = null;
-  remoteStreams: MediaStream[] = [];
+  sockId: any;
+  currentChannelId: string | null = null;
 
-  constructor(private http: HttpClient, private videoChatService: VideoChatService) {}
+  // Use Map to manage peerId → remote stream
+  remoteStreams: Map<string, MediaStream> = new Map();
 
-  // Get Authorization headers
+  constructor(
+    private http: HttpClient,
+    private videoChatService: VideoChatService,
+    private chatService: ChatService
+  ) {}
+
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('authToken');
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
   }
-  
-  // Initialize Peer connection
+
   initializePeerConnection(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Assume this is where the Peer connection is initialized
       this.peer = new Peer({
         host: 'localhost',
         port: 9000,
@@ -36,157 +46,147 @@ export class PeerService {
       });
 
       this.peer.on('call', (call: any) => {
-        console.log('Incoming call from peer:', call.peer);
-        this.onIncomingCall(call);  // Accept incoming call and process
+        console.log('📞 Incoming call from:', call.peer);
+        this.onIncomingCall(call);
       });
-  
+
       this.peer.on('open', (id: string) => {
         this.peerId = id;
-        console.log('Peer connected with ID:', id);
-        resolve();  // Call resolve once initialization is complete
+        console.log('✅ Peer connected with ID:', id);
+        resolve();
       });
-  
+
       this.peer.on('error', (err: any) => {
-        console.error('Peer connection error:', err);
-        reject(err);  // Call reject if an error occurs
+        console.error('❌ Peer error:', err);
+        reject(err);
       });
     });
   }
 
-  // Play and pass MP4 file as stream
-  setupLocalMP4Stream(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // Create video element
-      const videoElement = document.createElement('video');
-      videoElement.src = 'assets/videos/1.mp4';  // Your video file path
-      videoElement.autoplay = true;
-      videoElement.loop = true;  // Loop the video
-
-      // Wait for video metadata to load
-      videoElement.onloadedmetadata = () => {
-        // Create a new MediaStream
-        const mediaStream = (videoElement as any).captureStream();
-
-        // Add video track to the MediaStream
-        this.localStream = mediaStream;
-        // Bind the local stream to the video element on the page
-        const localVideo = document.getElementById('localVideo') as HTMLVideoElement;
-        if (localVideo) {
-          // Bind the local stream to the video element on the page
-          localVideo.srcObject = this.localStream;
-          resolve();  // Stream setup completed, call resolve
-        } else {
-          console.error('Local video element not found');
-          reject(new Error('Local video element not found'));
-        }
-      };
-
-      // Error handling
-      videoElement.onerror = (err) => {
-        console.error('Error loading MP4 file:', err);
-        reject(err);
-      };
-    });
-  }
-
-  // Answer incoming call
   onIncomingCall(call: any) {
     this.videoChatService.setVideoChatStatus(true);
-
     call.answer(this.localStream);
-    call.on('stream', (remoteStream: any) => {
-      // Update the remoteStreams array, ensuring each remote stream is stored
-      this.remoteStreams.push(remoteStream);
+    console.log(this.currentChannelId)
+    this.getPeerIdsInChannel(this.currentChannelId)
+    .then(() => {
+      call.on('stream', (remoteStream: MediaStream) => {
+        this.remoteStreams.set(call.peer, remoteStream);
+        this.updateRemoteStreams();
+      });
     });
-    this.updateRemoteStreams();
+
+    call.on('stream', (remoteStream: MediaStream) => {
+      this.remoteStreams.set(call.peer, remoteStream);
+      this.updateRemoteStreams();
+    });
+
+    call.on('close', () => {
+      console.log(`🔌 Call with ${call.peer} closed`);
+      this.removeRemoteStream(call.peer);
+    });
   }
 
-  // Update remote video streams
-  updateRemoteStreams() {
-    setTimeout(() => {
-      const remoteVideoContainer = document.querySelector('.remote-video-container');
-
-      if (remoteVideoContainer) {  
-        this.remoteStreams.forEach((remoteStream) => {
-          const videoElement = document.createElement('video');
-          videoElement.autoplay = true;
-          videoElement.muted = true;  // Prevent echoing of remote video
-          videoElement.srcObject = remoteStream;
-          videoElement.style.width = '48%';
-          videoElement.style.marginBottom = '10px';
-          videoElement.style.borderRadius = '8px';
-          videoElement.style.border = '2px solid #ddd';
-          remoteVideoContainer.appendChild(videoElement);
-        });
-      } else {
-        console.error('Remote video container not found!');
-      }
-    }, 1); // Delay execution to ensure DOM is rendered
-  }
-
-  // Call a peer
   callPeer(peerId: string) {
-    // Ensure the Peer instance is initialized and peerId is valid
     if (!this.peer || !this.peerId) {
-      console.error('Peer instance not initialized or no peerId');
+      console.error('❌ Peer not initialized');
       return;
     }
 
     if (!peerId) {
-      console.log('No other peer found. You are the only one in the room.');
-      return;  // Do not initiate a video call if no other user is present
+      console.log('👤 No other peer found in the room.');
+      return;
     }
-
-    console.log('peerId', peerId);
 
     const call = this.peer.call(peerId, this.localStream);
 
     if (call) {
-      call.on('stream', (remoteStream: any) => {
-        console.log('Received remote stream from peer:', peerId);
-
-        // Add the new remoteStream to the remote video stream array
-        this.remoteStreams.push(remoteStream);
-        
-        // Update remote video container to display all remote streams
+      call.on('stream', (remoteStream: MediaStream) => {
+        console.log('🎥 Received stream from:', peerId);
+        this.remoteStreams.set(peerId, remoteStream);
         this.updateRemoteStreams();
       });
-    } else {
-      console.error('Failed to initiate call');
+
+      call.on('close', () => {
+        console.log(`📴 Remote peer ${peerId} disconnected`);
+        this.removeRemoteStream(peerId);
+      });
     }
   }
 
-  // Get list of peerIds in the current channel
-  getPeerIdsInChannel(channelId: string): Promise<string[]> {
-    const headers = this.getAuthHeaders(); // Get auth headers
+  updateRemoteStreams() {
+    const remoteVideoContainer = document.querySelector('.remote-video-container');
   
-    // Request all peerIds in the current room from the backend
-    return this.http.get<string[]>(`http://localhost:3000/api/channels/getPeerIds/${channelId}`, { headers })
-      .toPromise()  // Use Promise to handle asynchronous operation
-      .then((peerIds: string[] | undefined) => {  // Explicitly specify peerIds type as string[] | undefined
-        return peerIds || [];  // Return an empty array if peerIds is undefined
-      })
-      .catch(error => {
-        console.error('Error fetching peer IDs:', error);
-        return [];
+    if (!remoteVideoContainer) {
+      console.error('🚫 Remote video container not found!');
+      return;
+    }
+  
+    remoteVideoContainer.innerHTML = '';
+  
+    const roomUsers: RoomUser[] = (window as any).roomUsers || [];
+    this.remoteStreams.forEach((stream, peerId) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'remote-video-wrapper';
+      wrapper.style.position = 'relative'; 
+      wrapper.style.display = 'inline-block';
+      wrapper.style.margin = '5px';
+      wrapper.style.width = '320px';
+      wrapper.style.height = '180px';
+      wrapper.style.overflow = 'hidden'; 
+      wrapper.setAttribute('data-peer-id', peerId);
+    
+      const videoElement = document.createElement('video');
+      videoElement.autoplay = true;
+      videoElement.playsInline = true;
+      videoElement.muted = true;
+      videoElement.srcObject = stream;
+      videoElement.style.width = '100%';
+      videoElement.style.height = '100%';
+    
+      // Default use peerId first
+      let username = peerId;
+    
+      // Request backend to get username each time
+      this.http.get<any>(`http://localhost:3000/api/getUsernameByPeerId/${peerId}`, {
+        headers: this.getAuthHeaders()
+      }).subscribe(res => {
+        console.log(res.username)
+        username = res.username || peerId;
+        label.textContent = username;
+        label.title = username;
       });
+    
+      const label = document.createElement('div');
+      label.textContent = username;
+      label.style.position = 'absolute';
+      label.style.bottom = '0';           // ✅ Stick to the bottom of the video
+      label.style.left = '0';
+      label.style.right = '0';            // ✅ Stretch horizontally
+      label.style.background = 'rgba(0,0,0,0.6)';
+      label.style.color = 'white';
+      label.style.padding = '2px 6px';
+      label.style.borderRadius = '0 0 8px 8px'; // ✅ Match rounded corners with video
+      label.style.fontSize = '12px';
+      label.style.textAlign = 'center';   // ✅ Center text
+    
+      wrapper.appendChild(videoElement);
+      wrapper.appendChild(label);
+      remoteVideoContainer.appendChild(wrapper);
+    });
+    
+  }
+  
+
+  removeRemoteStream(peerId: string) {
+    this.remoteStreams.delete(peerId);
+
+    const remoteVideoContainer = document.querySelector('.remote-video-container');
+    if (!remoteVideoContainer) return;
+
+    const wrapper = remoteVideoContainer.querySelector(`div[data-peer-id="${peerId}"]`);
+    if (wrapper) remoteVideoContainer.removeChild(wrapper);
   }
 
-  // Upload peerId to the server (only send authentication info, backend automatically parses)
-  uploadPeerId(channelId: string) {
-    const headers = this.getAuthHeaders(); // Custom method to get auth headers
-
-    // Send request to the backend, where the backend parses the auth header and stores peerId
-    return this.http.post('http://localhost:3000/api/channels/uploadPeerId', { 
-      channelId: channelId,  // Pass channelId 
-      peerId: this.peerId     // Pass peerId
-    },  { headers })
-      .subscribe(response => {
-        console.log('Peer ID uploaded to server:', response);
-      });
-  }
-
-  // Get local video stream
   setupLocalStream(): Promise<void> {
     return new Promise((resolve, reject) => {
       navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -194,50 +194,98 @@ export class PeerService {
           this.localStream = stream;
           const localVideo = document.getElementById('localVideo') as HTMLVideoElement;
           localVideo.srcObject = stream;
-          resolve(); 
+          resolve();
         })
         .catch((err) => {
-          console.error('Error accessing media devices.', err);
-          reject(err); 
+          console.error('🎤 Failed to access media devices:', err);
+          reject(err);
         });
     });
   }
 
-  // Notify server that user has left the room
+  setupLocalMP4Stream(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const videoElement = document.createElement('video');
+      videoElement.src = 'assets/videos/1.mp4';
+      videoElement.autoplay = true;
+      videoElement.loop = true;
+
+      videoElement.onloadedmetadata = () => {
+        const mediaStream = (videoElement as any).captureStream();
+        this.localStream = mediaStream;
+
+        const localVideo = document.getElementById('localVideo') as HTMLVideoElement;
+        if (localVideo) {
+          localVideo.srcObject = mediaStream;
+          resolve();
+        } else {
+          reject(new Error('Local video element not found'));
+        }
+      };
+
+      videoElement.onerror = (err) => reject(err);
+    });
+  }
+
+  getPeerIdsInChannel(channelId: string | null): Promise<RoomUser[]> {
+    const headers = this.getAuthHeaders();
+  
+    return this.http
+      .get<RoomUser[]>(`http://localhost:3000/api/channels/getPeerIds/${channelId}`, { headers })
+      .toPromise()
+      .then((users) => {
+        // Directly returns array, no need for `.users`
+        (window as any).roomUsers = users || [];
+        return users || [];
+      })
+      .catch((error) => {
+        console.error('🔎 Failed to get peer IDs:', error);
+        return [];
+      });
+  }
+
+  uploadPeerId(channelId: string) {
+    const headers = this.getAuthHeaders();
+    this.sockId = this.chatService.getSocketId();
+
+    this.currentChannelId = channelId;
+    this.http.post<any>('http://localhost:3000/api/channels/uploadPeerId', {
+      channelId,
+      peerId: this.peerId,
+      socketId: this.sockId,
+    }, { headers })
+    .subscribe((res) => {
+      console.log('✅ Peer ID uploaded:', res);
+      (window as any).roomUsers = res.users || [];
+    });
+  }
+
   notifyServerUserLeft(channelId: string) {
     const headers = this.getAuthHeaders();
     this.closeConnection();
-   // Send request to the backend to notify that the user left the room
-   return this.http.post('http://localhost:3000/api/channels/userLeftPeer', {  channelId: channelId,  // Pass channelId 
-    peerId: this.peerId  
-   }, { headers })
-   .subscribe(response => {
-     console.log('Server notified that user left the room:', response);
-   });
+
+    return this.http.post('http://localhost:3000/api/channels/userLeftPeer', {
+      channelId,
+      peerId: this.peerId
+    }, { headers }).subscribe((response) => {
+      console.log('📤 Notified server user left:', response);
+    });
   }
 
-  // Close the connection
   closeConnection() {
     if (this.peer) {
-      // Only destroy the peer instance
-      this.peer.destroy();  // Destroy Peer instance to ensure all connections are closed
-      this.peer = null;  // Clear peer object
+      this.peer.destroy();
+      this.peer = null;
     }
 
-    // Stop all tracks in the local stream
     if (this.localStream) {
-      const tracks = this.localStream.getTracks();
-      tracks.forEach((track: MediaStreamTrack) => track.stop());  // Stop each track
-      (document.getElementById('localVideo') as HTMLVideoElement).srcObject = null;  // Clear video source
-      this.localStream = null;  // Clear local stream object
+      this.localStream.getTracks().forEach(track => track.stop());
+      const localVideo = document.getElementById('localVideo') as HTMLVideoElement;
+      if (localVideo) localVideo.srcObject = null;
+      this.localStream = null;
     }
 
-    // Stop all tracks in the remote stream
-    if (this.remoteStream) {
-      const tracks = this.remoteStream.getTracks();
-      tracks.forEach((track: MediaStreamTrack) => track.stop());  // Stop each track
-      (document.getElementById('remote-video-container') as HTMLVideoElement).srcObject = null;  // Clear video source
-      this.remoteStream = null;  // Clear remote stream object
-    }
+    this.remoteStreams.forEach((_, peerId) => this.removeRemoteStream(peerId));
+    this.remoteStreams.clear();
   }
 }

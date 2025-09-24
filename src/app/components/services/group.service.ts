@@ -1,94 +1,90 @@
-// src/app/services/group.service.ts
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { jwtDecode } from 'jwt-decode';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class GroupService {
   private apiUrl = 'http://localhost:3000/api/groups';
-
   constructor(private http: HttpClient) {}
 
-  // Get Authorization headers
-  private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('authToken');
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
+  // ----- helpers -----
+  private jsonHeaders(): { headers: HttpHeaders } {
+    const token = localStorage.getItem('authToken') || '';
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: token ? `Bearer ${token}` : ''
     });
+    return { headers };
   }
 
-  // Get Token
-  getAuthToken(): string | null {
-    return localStorage.getItem('authToken');
-  }
+  // ==================
+  // Group endpoints
+  // ==================
 
-  // Get user role from the token
-  getUserRole(): string | null {
-    const token = this.getAuthToken();
-    if (token) {
-      const decodedToken: any = jwtDecode(token);  // Decode the JWT Token
-      return decodedToken?.role || null;  // Return the role field
-    }
-    return null;
-  }
-
-  // Get all groups
+  // Get all groups (superadmin)
   getAllGroups(): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.get(`${this.apiUrl}/all`, { headers });
+    return this.http.get<any>(`${this.apiUrl}/all`, this.jsonHeaders());
   }
 
-  // Get groups managed by admin
-  getAdminGroups(userId: string): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.get(`${this.apiUrl}/admin/${userId}`, { headers });
+  // Get groups managed by an admin
+  getAdminGroups(adminId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/admin/${adminId}`, this.jsonHeaders());
   }
 
-  // Create a new group
-  createGroup(groupData: any): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.post(`${this.apiUrl}/create`, groupData, { headers });
+  // Create a group
+  createGroup(groupData: { name: string; description?: string; adminIds?: string[] }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/create`, groupData, this.jsonHeaders());
   }
 
   // Delete a group
   deleteGroup(groupId: string): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.delete(`${this.apiUrl}/delete/${groupId}`, { headers });
+    return this.http.delete<any>(`${this.apiUrl}/delete/${groupId}`, this.jsonHeaders());
   }
 
-  // Add member to a group
+  // ==================
+  // Group members / admins
+  // ==================
+
   addMemberToGroup(groupId: string, userId: string): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.post(`${this.apiUrl}/add-member`, { groupId, userId }, { headers });
+    return this.http.post<any>(`${this.apiUrl}/add-member`, { groupId, userId }, this.jsonHeaders());
   }
 
-  // Add admin to a group
-  addAdminToGroup(groupId: string, userId: string): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.post(`${this.apiUrl}/add-admin`, { groupId, userId }, { headers });
-  }
-
-  // Remove member from a group
   removeMemberFromGroup(groupId: string, userId: string): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.post(`${this.apiUrl}/remove-member`, { groupId, userId }, { headers });
+    return this.http.post<any>(`${this.apiUrl}/remove-member`, { groupId, userId }, this.jsonHeaders());
   }
 
-  // Remove admin from a group
-  removeAdminFromGroup(groupId: string, userId: string): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.post(`${this.apiUrl}/remove-admin`, { groupId, userId }, { headers });
+  addAdminToGroup(groupId: string, userId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/add-admin`, { groupId, userId }, this.jsonHeaders());
   }
-    // Delete channel from a specific group
-    deleteChannelFromGroup(groupId: string, channelId: string): Observable<any> {
-      const headers = new HttpHeaders({
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      });
+
+  removeAdminFromGroup(groupId: string, userId: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/remove-admin`, { groupId, userId }, this.jsonHeaders());
+  }
+
+  createChannel(
+    groupId: string,
+    channelData: { name: string; description?: string; adminIds?: string[]; memberIds?: string[] }
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/${groupId}/channels/create`,
+      channelData,
+      this.jsonHeaders()
+    );
+  }
+
+  deleteChannel(groupId: string, channelId: string): Observable<any> {
+    return this.http.delete<any>(
+      `${this.apiUrl}/${groupId}/channels/delete/${channelId}`,
+      this.jsonHeaders()
+    );
+  }
   
-      return this.http.post<any>(`${this.apiUrl}/delete-channel`, { groupId, channelId }, { headers });
-    }
+  getGroupChannels(groupId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/${groupId}/channels`,
+      this.jsonHeaders()
+    );
+  }
 }

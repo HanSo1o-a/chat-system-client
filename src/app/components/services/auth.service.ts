@@ -45,6 +45,7 @@ export class AuthService {
     return null;
   }
 
+  // Get current user ID
   getUserId(): string | null {
     const token = this.getAuthToken();
     if (token) {
@@ -59,20 +60,4 @@ export class AuthService {
     const token = this.getAuthToken();
     return !!token;  // If Token exists, consider the user as logged in
   }
-
-  
-   // Update the username in the backend
-   updateUsername(oldUsername: string, newUsername: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/update-username`, {
-      oldUsername,
-      newUsername
-    });
-  }
-
-  // Chat service to exit a group
-exitGroup(groupId: string, username: string): Observable<any> {
-  return this.http.post<any>('http://localhost:3000/api/groups/exit-group', { groupId, username });
-}
-
-  
 }
