@@ -1,0 +1,274 @@
+/* src/app/components/chat/chat.component.css */
+
+.chat-container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+/* Channel List */
+.channel-list {
+  width: 300px;  /* 增加宽度，提供更大的空间 */
+  background-color: #f4f4f4;
+  padding: 20px;
+  border-right: 2px solid #ddd;  /* 给右侧添加分隔线 */
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);  /* 为频道列表添加阴影 */
+}
+
+/* Section Title */
+.channel-list h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Change Username Section */
+.change-username {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.change-username h3 {
+  margin: 10px 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.change-username input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.change-username button {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.change-username button:hover {
+  background-color: #0056b3;
+}
+
+/* Group Container */
+.group-container {
+  background-color: #fff;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.group-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.group-info {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.group-info p {
+  margin-bottom: 5px;
+}
+
+.group-info span {
+  font-weight: normal;
+  color: #555;
+}
+/* Title for Group Channels */
+.channels-title {
+  font-size: 20px; /* Larger font size */
+  font-weight: bold; /* Bold text */
+  color: #333; /* Dark color for readability */
+  margin-bottom: 15px;
+  text-transform: uppercase; /* Make it all caps for emphasis */
+  letter-spacing: 1px; /* Add some space between letters */
+  border-bottom: 2px solid #333; /* Blue underline for emphasis */
+  padding-bottom: 10px; /* Add some space below the title */
+}
+
+/* Channel list items styling */
+.channel-list-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.channel {
+  padding: 12px;
+  background-color: #fff;
+  margin: 5px 0;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s, transform 0.3s;
+  font-size: 16px;  /* Increase font size for better readability */
+  color: #333; /* Blue text to match the theme */
+  border: 1px solid #ddd;  /* Light border to separate channels */
+}
+
+/* Hover effect for channels */
+.channel:hover {
+  background-color: #e7f4ff; /* Light blue background on hover */
+  transform: scale(1.05); /* Slight zoom effect to emphasize */
+  color: #0056b3; /* Darker blue on hover */
+  border-color: #0056b3; /* Darker border on hover */
+}
+
+
+/* Select Group to Exit */
+.exit-group {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.exit-group h3 {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.exit-group select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+/* Adjust input width inside the change-username section */
+.change-username input {
+  width: 100%; /* Ensure it fills the container */
+  max-width: 250px;  /* Limit the maximum width to 250px */
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  display: block;  /* Make sure it's a block element */
+  margin-left: auto;
+  margin-right: auto;  /* Center the input horizontally */
+}
+
+.exit-group button {
+  width: 100%;
+  padding: 10px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.exit-group button:hover {
+  background-color: #c82333;
+}
+.chat-box {
+  flex-grow: 1;
+  padding: 10px;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages {
+  height: 70%;
+  overflow-y: auto;
+}
+
+.message {
+  background-color: #fff;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.message-input {
+  display: flex;
+  margin-top: 10px;
+}
+
+.message-input input {
+  width: 85%;
+  padding: 8px;
+  margin-right: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.message-input button {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.message-input button:hover {
+  background-color: #218838;
+}
+
+.go-to-admin-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background-color: #ffc107;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  z-index: 1000;
+}
+
+.go-to-admin-btn:hover {
+  background-color: #e0a800;
+}
+
+.logout-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 60%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background-color: #ffc107;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  z-index: 1000;
+}
+
+.logout-btn:hover {
+  opacity: 0.8;
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .video-container, .remote-video-container video {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
